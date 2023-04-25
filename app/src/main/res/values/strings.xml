@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">homework3</string>
+    <string name="unknown">Unknown</string>
+    <string name="refresh">Refresh</string>
+    <string name="back">Back</string>
+    <string name="nothing">Nothing</string>
+</resources>
