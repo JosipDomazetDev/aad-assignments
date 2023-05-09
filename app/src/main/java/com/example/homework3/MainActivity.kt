@@ -9,7 +9,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -19,7 +19,9 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -32,6 +34,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import coil.compose.AsyncImage
 import com.example.homework3.model.DataStatus
 import com.example.homework3.model.LogKeys
 import com.example.homework3.model.NewsItem
@@ -104,7 +107,7 @@ fun Navigation() {
                     actions = {
                         // Creating Icon button for dropdown menu
                         IconButton(onClick = { mDisplayMenu = !mDisplayMenu }) {
-                            Icon(Icons.Default.MoreVert, "", tint = Color.White)
+                            Icon(Icons.Default.MoreVert, "", tint = MaterialTheme.colorScheme.onSurface)
                         }
                         // Creating a dropdown menu
                         DropdownMenu(
@@ -124,8 +127,8 @@ fun Navigation() {
 
                     },
                     colors = TopAppBarDefaults.smallTopAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        titleContentColor = MaterialTheme.colorScheme.onPrimary
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        titleContentColor = MaterialTheme.colorScheme.onSurface
                     ),
                 )
                 NewsList(mainViewModel = newsViewModel) {
@@ -202,7 +205,7 @@ fun Navigation() {
                             )
                         }
                     },
-                    )
+                )
                 SettingsScreen(settingsViewModel = settingsViewModel) {
                     reload(newsViewModel)
                 }
@@ -255,8 +258,8 @@ fun NewsList(
             ) {
                 ReloadButton(mainViewModel)
                 LazyColumn {
-                    items(news) { newsItem ->
-                        NewsItemRow(newsItem, onNavigateClick)
+                    itemsIndexed(news) { i, newsItem ->
+                        NewsItemRow(i, newsItem, onNavigateClick)
                     }
                 }
 
@@ -290,7 +293,7 @@ private fun reload(mainViewModel: NewsViewModel) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NewsItemRow(newsItem: NewsItem, onNavigateClick: (NewsItem) -> Unit) {
+fun NewsItemRow(i: Int, newsItem: NewsItem, onNavigateClick: (NewsItem) -> Unit) {
     Card(
         modifier = Modifier
             .padding(8.dp)
@@ -303,44 +306,91 @@ fun NewsItemRow(newsItem: NewsItem, onNavigateClick: (NewsItem) -> Unit) {
             defaultElevation = 10.dp
         ),
         shape = RoundedCornerShape(8.dp)
+
     ) {
-        Row(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth()
-        ) {
-//            Image(
-//                modifier = Modifier
-//                    .padding(end = 16.dp)
-//                    .size(96.dp),
-//                painter = rememberImagePainter(
-//                    data = newsItem.imageUrl,
-//                    builder = {
-//                        crossfade(true)
-//                    }
-//                ),
-//                contentDescription = newsItem.title
-//            )
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = newsItem.title,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 8.dp)
+
+        if (i == 0) {
+            Box(modifier = Modifier.fillMaxWidth()) {
+                AsyncImage(
+                    model = newsItem.imageUrl,
+                    contentDescription = stringResource(R.string.contentDesc),
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
                 )
-                Text(
-                    text = newsItem.author,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-                Text(
-                    text = "${newsItem.publicationDate}",
-                    style = MaterialTheme.typography.bodySmall
-                )
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.BottomCenter),
+                    color = Color.Black.copy(alpha = 0.75f)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+
+                        verticalArrangement = Arrangement.Bottom
+                    ) {
+                        Text(
+                            text = newsItem.title,
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.Bold
+                            ),
+                            color = Color.White,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "By ${newsItem.author} - ${newsItem.publicationDate}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.White
+                        )
+                    }
+                }
+            }
+        } else {
+            Row(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(120.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                ) {
+                    AsyncImage(
+                        model = newsItem.imageUrl,
+                        contentDescription = stringResource(R.string.contentDesc),
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = newsItem.title,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    Text(
+                        text = newsItem.author,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    Text(
+                        text = "${newsItem.publicationDate}",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
             }
         }
     }
 }
+
 
 @Composable
 fun ErrorView(mainViewModel: NewsViewModel, message: String) {
