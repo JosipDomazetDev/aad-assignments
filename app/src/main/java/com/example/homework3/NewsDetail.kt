@@ -1,16 +1,23 @@
 package com.example.homework3
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import android.widget.TextView
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.text.HtmlCompat
+import coil.compose.AsyncImage
 import com.example.homework3.model.NewsItem
 import com.example.homework3.viewmodel.NewsDetailViewModel
 
@@ -23,26 +30,106 @@ fun NewsDetail(newsDetailViewModel: NewsDetailViewModel) {
         Text(stringResource(R.string.nothing))
         return
     }
+    val uriHandler = LocalUriHandler.current
 
     Column(
         modifier = Modifier
             .padding(16.dp)
             .verticalScroll(rememberScrollState())
     ) {
-        Text(text = "Unique Identifier: ${newsItem.id}")
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(text = "Title: ${newsItem.title}")
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(text = "Description: ${newsItem.description}")
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(text = "Image URL: ${newsItem.imageUrl}")
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(text = "Author: ${newsItem.author}")
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(text = "Publication Date: ${newsItem.publicationDate}")
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(text = "Full Article Link: ${newsItem.fullArticleLink}")
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(text = "Keywords: ${newsItem.keywords.joinToString(", ")}")
+        NewsImage(newsItem = newsItem)
+        NewsDescription(newsItem)
+        Button(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.CenterHorizontally),
+            onClick = {
+                uriHandler.openUri(newsItem.fullArticleLink)
+            }
+        ) {
+            Text(text = "Full Story")
+        }
     }
+}
+
+@Composable
+private fun NewsDescription(newsItem: NewsItem) {
+    Html(text = newsItem.description)
+    Spacer(modifier = Modifier.height(16.dp))
+    Text(
+        style = MaterialTheme.typography.bodySmall,
+        text = "Keywords: ${newsItem.keywords.joinToString(", ")}"
+    )
+    Spacer(modifier = Modifier.height(16.dp))
+}
+
+@Composable
+fun Html(text: String) {
+    AndroidView(factory = { context ->
+        TextView(context).apply {
+            setText(HtmlCompat.fromHtml(text, HtmlCompat.FROM_HTML_MODE_LEGACY))
+        }
+    })
+}
+
+
+@Composable
+fun NewsImage(newsItem: NewsItem) {
+    var showProgressBar by remember { mutableStateOf(true) }
+
+    if (showProgressBar)
+        CircularProgressIndicator(
+            modifier = Modifier
+                .size(48.dp)
+                .padding(16.dp),
+            color = MaterialTheme.colorScheme.primary
+        )
+
+    Box(modifier = Modifier.aspectRatio(16f / 9f)) {
+        AsyncImage(
+            model = newsItem.imageUrl,
+            contentDescription = stringResource(R.string.contentDesc),
+            contentScale = ContentScale.Crop,
+            onLoading = {
+                showProgressBar = true
+            }, onSuccess = {
+                showProgressBar = false
+            },
+            onError = {
+                showProgressBar = false
+            },
+            modifier = Modifier.fillMaxSize()
+        )
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter),
+            color = Color.Black.copy(alpha = 0.75f)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+
+                verticalArrangement = Arrangement.Bottom
+            ) {
+                Text(
+                    text = newsItem.title,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = Color.White,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "By ${newsItem.author} - ${newsItem.publicationDate}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.White
+                )
+            }
+        }
+    }
+    Spacer(modifier = Modifier.height(16.dp))
 }
