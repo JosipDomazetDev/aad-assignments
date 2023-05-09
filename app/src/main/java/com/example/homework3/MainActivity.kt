@@ -35,10 +35,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
-import com.example.homework3.model.DataStatus
-import com.example.homework3.model.LogKeys
-import com.example.homework3.model.NewsItem
-import com.example.homework3.model.StateWrapper
+import com.example.homework3.model.*
 import com.example.homework3.repository.NewsRepository
 import com.example.homework3.repository.SettingsDataStore
 import com.example.homework3.ui.theme.Homework3Theme
@@ -107,7 +104,11 @@ fun Navigation() {
                     actions = {
                         // Creating Icon button for dropdown menu
                         IconButton(onClick = { mDisplayMenu = !mDisplayMenu }) {
-                            Icon(Icons.Default.MoreVert, "", tint = MaterialTheme.colorScheme.onSurface)
+                            Icon(
+                                Icons.Default.MoreVert,
+                                "",
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
                         }
                         // Creating a dropdown menu
                         DropdownMenu(
@@ -131,7 +132,7 @@ fun Navigation() {
                         titleContentColor = MaterialTheme.colorScheme.onSurface
                     ),
                 )
-                NewsList(mainViewModel = newsViewModel) {
+                NewsList(mainViewModel = newsViewModel, settingsViewModel = settingsViewModel) {
                     navController.navigate(
                         route = Screen.NewsDetailScreen.route.replace(
                             "{id}",
@@ -171,7 +172,7 @@ fun Navigation() {
                         }
                     }
                 )
-                NewsDetail(newsDetailViewModel)
+                NewsDetail(newsDetailViewModel, settingsViewModel)
             }
 
         }
@@ -219,12 +220,13 @@ fun Navigation() {
 fun NewsList(
     modifier: Modifier = Modifier,
     mainViewModel: NewsViewModel,
-    onNavigateClick: (NewsItem) -> Unit
+    settingsViewModel: SettingsViewModel,
+    onNavigateClick: (NewsItem) -> Unit,
 ) {
     LaunchedEffect(Unit) {
         mainViewModel.fetchCardsInitially()
     }
-
+    val settings: SettingsData = settingsViewModel.settings.collectAsState().value
     val newsObserveAsState: State<StateWrapper<List<NewsItem>>> =
         mainViewModel.newsItems.observeAsState(
             initial = StateWrapper.init()
@@ -259,7 +261,7 @@ fun NewsList(
                 ReloadButton(mainViewModel)
                 LazyColumn {
                     itemsIndexed(news) { i, newsItem ->
-                        NewsItemRow(i, newsItem, onNavigateClick)
+                        NewsItemRow(i, newsItem, settings, onNavigateClick)
                     }
                 }
 
@@ -293,7 +295,12 @@ private fun reload(mainViewModel: NewsViewModel) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NewsItemRow(i: Int, newsItem: NewsItem, onNavigateClick: (NewsItem) -> Unit) {
+fun NewsItemRow(
+    i: Int,
+    newsItem: NewsItem,
+    settings: SettingsData,
+    onNavigateClick: (NewsItem) -> Unit
+) {
     Card(
         modifier = Modifier
             .padding(8.dp)
@@ -311,12 +318,13 @@ fun NewsItemRow(i: Int, newsItem: NewsItem, onNavigateClick: (NewsItem) -> Unit)
 
         if (i == 0) {
             Box(modifier = Modifier.fillMaxWidth()) {
-                AsyncImage(
-                    model = newsItem.imageUrl,
-                    contentDescription = stringResource(R.string.contentDesc),
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
+                if (settings.showImages)
+                    AsyncImage(
+                        model = newsItem.imageUrl,
+                        contentDescription = stringResource(R.string.contentDesc),
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -359,12 +367,13 @@ fun NewsItemRow(i: Int, newsItem: NewsItem, onNavigateClick: (NewsItem) -> Unit)
                         .size(120.dp)
                         .clip(RoundedCornerShape(8.dp))
                 ) {
-                    AsyncImage(
-                        model = newsItem.imageUrl,
-                        contentDescription = stringResource(R.string.contentDesc),
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
+                    if (settings.showImages)
+                        AsyncImage(
+                            model = newsItem.imageUrl,
+                            contentDescription = stringResource(R.string.contentDesc),
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
                 }
 
                 Spacer(modifier = Modifier.width(16.dp))
@@ -419,7 +428,11 @@ fun ErrorView(mainViewModel: NewsViewModel, message: String) {
 @Composable
 fun DefaultPreview() {
     Homework3Theme {
-        NewsList(mainViewModel = newsViewModel, onNavigateClick = {})
+        NewsList(
+            mainViewModel = newsViewModel,
+            onNavigateClick = {},
+            settingsViewModel = settingsViewModel
+        )
     }
 }
 

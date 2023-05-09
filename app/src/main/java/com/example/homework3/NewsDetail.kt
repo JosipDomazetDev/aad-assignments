@@ -1,5 +1,6 @@
 package com.example.homework3
 
+import SettingsViewModel
 import android.widget.TextView
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -19,11 +20,14 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.text.HtmlCompat
 import coil.compose.AsyncImage
 import com.example.homework3.model.NewsItem
+import com.example.homework3.model.SettingsData
 import com.example.homework3.viewmodel.NewsDetailViewModel
 
 
 @Composable
-fun NewsDetail(newsDetailViewModel: NewsDetailViewModel) {
+fun NewsDetail(newsDetailViewModel: NewsDetailViewModel, settingsViewModel: SettingsViewModel) {
+    val settings: SettingsData = settingsViewModel.settings.collectAsState().value
+
     val newsItem: NewsItem? = newsDetailViewModel.getCurrentNewsItem().value
 
     if (newsItem == null) {
@@ -37,7 +41,7 @@ fun NewsDetail(newsDetailViewModel: NewsDetailViewModel) {
             .padding(16.dp)
             .verticalScroll(rememberScrollState())
     ) {
-        NewsImage(newsItem = newsItem)
+        NewsImage(newsItem = newsItem, settings)
         NewsDescription(newsItem)
         Button(
             modifier = Modifier
@@ -74,10 +78,10 @@ fun Html(text: String) {
 
 
 @Composable
-fun NewsImage(newsItem: NewsItem) {
+fun NewsImage(newsItem: NewsItem, settings: SettingsData) {
     var showProgressBar by remember { mutableStateOf(true) }
 
-    if (showProgressBar)
+    if (showProgressBar && settings.showImages)
         CircularProgressIndicator(
             modifier = Modifier
                 .size(48.dp)
@@ -86,20 +90,21 @@ fun NewsImage(newsItem: NewsItem) {
         )
 
     Box(modifier = Modifier.aspectRatio(16f / 9f)) {
-        AsyncImage(
-            model = newsItem.imageUrl,
-            contentDescription = stringResource(R.string.contentDesc),
-            contentScale = ContentScale.Crop,
-            onLoading = {
-                showProgressBar = true
-            }, onSuccess = {
-                showProgressBar = false
-            },
-            onError = {
-                showProgressBar = false
-            },
-            modifier = Modifier.fillMaxSize()
-        )
+        if (settings.showImages)
+            AsyncImage(
+                model = newsItem.imageUrl,
+                contentDescription = stringResource(R.string.contentDesc),
+                contentScale = ContentScale.Crop,
+                onLoading = {
+                    showProgressBar = true
+                }, onSuccess = {
+                    showProgressBar = false
+                },
+                onError = {
+                    showProgressBar = false
+                },
+                modifier = Modifier.fillMaxSize()
+            )
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
