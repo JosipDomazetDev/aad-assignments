@@ -44,7 +44,10 @@ class NewsViewModel(
                 val fetchCards = repo.fetchNews(newsFeedUrl)
                 _newsItems.postValue(fetchCards)
 
-                Log.i(LogKeys.BASIC_KEY, "Fetched from endpoint with state:" + fetchCards.status.toString())
+                Log.i(
+                    LogKeys.BASIC_KEY,
+                    "Fetched from endpoint with state:" + fetchCards.status.toString()
+                )
             } catch (ex: MalformedURLException) {
                 _newsItems.postValue(
                     StateWrapper.error(
@@ -64,6 +67,11 @@ class NewsViewModel(
                 ex.printStackTrace()
             }
         }
+    }
+
+    fun reload() {
+        Log.i(LogKeys.BASIC_KEY, "Reloading...")
+        fetchCards()
     }
 
 //    // Define ViewModel factory in a companion object
