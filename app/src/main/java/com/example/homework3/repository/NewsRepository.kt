@@ -14,8 +14,8 @@ import java.util.*
 
 class NewsRepository {
 
-    suspend fun fetchNews(): StateWrapper<List<NewsItem>> = withContext(Dispatchers.IO) {
-        val items: List<NewsItem> = loadXmlFromNetwork("https://www.engadget.com/rss.xml")
+    suspend fun fetchNews(newsFeedUrl: String): StateWrapper<List<NewsItem>> = withContext(Dispatchers.IO) {
+        val items: List<NewsItem> = loadXmlFromNetwork(newsFeedUrl)
         return@withContext StateWrapper.success(items.sortedByDescending { it.publicationDate })
     }
 
