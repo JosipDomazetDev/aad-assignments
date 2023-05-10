@@ -3,8 +3,8 @@ package com.example.homework3.viewmodel
 import android.util.Log
 import androidx.lifecycle.*
 import androidx.lifecycle.viewmodel.CreationExtras
+import com.example.homework3.LogKeys
 import com.example.homework3.model.DataStatus
-import com.example.homework3.model.LogKeys
 import com.example.homework3.model.NewsItem
 import com.example.homework3.model.StateWrapper
 import com.example.homework3.repository.NewsRepository

@@ -162,7 +162,15 @@ class NewsFeedParser {
 
     private fun convertStringToDate(dateString: String): Date {
         val dateFormat = SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss Z", Locale.US)
-        return dateFormat.parse(dateString) ?: Date()
+
+        return try {
+            dateFormat.parse(dateString) ?: Date()
+        } catch (e: ParseException) {
+            // Parse this date format instead (some RSS feeds use this format)
+            val replace = dateString.replace("Z", "+0000")
+
+            dateFormat.parse(replace) ?: Date()
+        }
     }
 
     @Throws(IOException::class, XmlPullParserException::class)

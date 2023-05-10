@@ -49,7 +49,7 @@ class MainActivity : ComponentActivity() {
 
 sealed class Screen(val route: String) {
     object NewsListScreen : Screen(route = "news")
-    object NewsDetailScreen : Screen(route = "news/{id}")
+    object NewsDetailScreen : Screen(route = "news/detail")
     object SettingsScreen : Screen(route = "settings")
 }
 
@@ -121,12 +121,9 @@ fun Navigation() {
                         titleContentColor = MaterialTheme.colorScheme.onSurface
                     ),
                 )
-                NewsList(mainViewModel = newsViewModel, settingsViewModel = settingsViewModel) {
+                NewsList(mainViewModel = newsViewModel,  settingsViewModel = settingsViewModel) {
                     navController.navigate(
-                        route = Screen.NewsDetailScreen.route.replace(
-                            "{id}",
-                            it.id
-                        )
+                        route = Screen.NewsDetailScreen.route
                     )
 
                 }
