@@ -157,7 +157,8 @@ class NewsFeedParser {
             return url
         }
 
-        return null
+        // Changed this to return url instead of null because it is the next best match
+        return url
     }
 
     private fun convertStringToDate(dateString: String): Date {
