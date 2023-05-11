@@ -16,11 +16,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.datastore.preferences.preferencesDataStore
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.get
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -65,16 +70,24 @@ lateinit var settingsViewModel: SettingsViewModel
 @Composable
 fun Navigation() {
     val context = LocalContext.current
+    val viewModelStoreOwner = checkNotNull(LocalViewModelStoreOwner.current) {
+        "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
+    }
+
     val settingsDataStore = SettingsDataStore(context.dataStore)
 
-    if (!::settingsViewModel.isInitialized) {
-        settingsViewModel = viewModel(initializer = { SettingsViewModel(settingsDataStore) })
-    }
+    settingsViewModel = ViewModelProvider(
+        viewModelStoreOwner,
+        SettingsViewModel.SettingsViewModelFactory(settingsDataStore)
+    ).get()
 
-    if (!::newsViewModel.isInitialized) {
-        newsViewModel =
-            viewModel(initializer = { NewsViewModel(newsRepository, settingsDataStore) })
-    }
+
+    newsViewModel = ViewModelProvider(
+        viewModelStoreOwner,
+        NewsViewModel.NewsViewModelFactory(
+            newsRepository, settingsDataStore
+        )
+    ).get()
 
     val navController = rememberNavController()
     var mDisplayMenu by remember { mutableStateOf(false) }
@@ -121,7 +134,7 @@ fun Navigation() {
                         titleContentColor = MaterialTheme.colorScheme.onSurface
                     ),
                 )
-                NewsList(mainViewModel = newsViewModel,  settingsViewModel = settingsViewModel) {
+                NewsList(mainViewModel = newsViewModel, settingsViewModel = settingsViewModel) {
                     navController.navigate(
                         route = Screen.NewsDetailScreen.route
                     )

@@ -1,4 +1,5 @@
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.homework3.model.SettingsData
 import com.example.homework3.repository.SettingsDataStore
@@ -16,7 +17,7 @@ class SettingsViewModel(private val settingsDataStore: SettingsDataStore) : View
         SettingsData()
     )
 
-    fun saveSettings(settings: SettingsData, onSettingChanged: (SettingsData) -> Unit = {} ) {
+    fun saveSettings(settings: SettingsData, onSettingChanged: (SettingsData) -> Unit = {}) {
         viewModelScope.launch {
             settingsDataStore.saveSettings(settings)
             // Pass the callback into the viewModelScope
@@ -25,33 +26,14 @@ class SettingsViewModel(private val settingsDataStore: SettingsDataStore) : View
     }
 
 
-//    // Define ViewModel factory in a companion object
-//    companion object {
-//        lateinit var SettingsDataStore: SettingsDataStore
-//
-//        val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
-//            @Suppress("UNCHECKED_CAST")
-//            override fun <T : ViewModel> create(
-//                modelClass: Class<T>,
-//                extras: CreationExtras
-//            ): T {
-//                // Get the Application object from extras
-//
-//
-//                val application = checkNotNull(extras[APPLICATION_KEY])
-//                // Create a SavedStateHandle for this ViewModel from extras
-//                val savedStateHandle = extras.createSavedStateHandle()
-//
-//
-//                val context = application.applicationContext
-//                val settingsDataStore = SettingsDataStore(context.dataStore)
-//
-//                application.applicationContext
-//                return SettingsViewModel(
-//                    SettingsDataStore
-//
-//                ) as T
-//            }
-//        }
-//    }
+    class SettingsViewModelFactory(private val settingsDataStore: SettingsDataStore) :
+        ViewModelProvider.Factory {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            if (modelClass.isAssignableFrom(SettingsViewModel::class.java)) {
+                @Suppress("UNCHECKED_CAST")
+                return SettingsViewModel(settingsDataStore = settingsDataStore) as T
+            }
+            throw IllegalArgumentException("Unknown ViewModel class")
+        }
+    }
 }

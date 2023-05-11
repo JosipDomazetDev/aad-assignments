@@ -74,24 +74,19 @@ class NewsViewModel(
         fetchCards()
     }
 
-//    // Define ViewModel factory in a companion object
-//    companion object {
-//
-//        val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
-//            @Suppress("UNCHECKED_CAST")
-//            override fun <T : ViewModel> create(
-//                modelClass: Class<T>,
-//                extras: CreationExtras
-//            ): T {
-//                // Get the Application object from extras
-//                val application = checkNotNull(extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY])
-//                // Create a SavedStateHandle for this ViewModel from extras
-//                val savedStateHandle = extras.createSavedStateHandle()
-//
-//                return NewsViewModel(
-//                    // TODO HOW DO I ACCESS THE DEPENDENCIES ??
-//                ) as T
-//            }
-//        }
-//    }
+    class NewsViewModelFactory(
+        private val newsRepository: NewsRepository,
+        private val settingsDataStore: SettingsDataStore
+    ) : ViewModelProvider.Factory {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            if (modelClass.isAssignableFrom(NewsViewModel::class.java)) {
+                @Suppress("UNCHECKED_CAST")
+                return NewsViewModel(
+                    settingsDataStore = settingsDataStore,
+                    repo = newsRepository
+                ) as T
+            }
+            throw IllegalArgumentException("Unknown ViewModel class")
+        }
+    }
 }
