@@ -10,28 +10,28 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.get
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.homework3.repository.NewsRepository
-import com.example.homework3.repository.SettingsDataStore
+import com.example.homework3.model.DataStatus
+import com.example.homework3.repository.*
+import com.example.homework3.repository.NewsDataRepository
+import com.example.homework3.repository.db.NewsDatabase
 import com.example.homework3.ui.theme.Homework3Theme
 import com.example.homework3.viewmodel.NewsDetailViewModel
 import com.example.homework3.viewmodel.NewsViewModel
@@ -60,12 +60,12 @@ sealed class Screen(val route: String) {
 
 
 private val Context.dataStore by preferencesDataStore(name = "settings")
-val newsRepository = NewsRepository()
-val newsDetailViewModel = NewsDetailViewModel()
 
+val newsRepository = NewsRepository()
+
+val newsDetailViewModel = NewsDetailViewModel()
 lateinit var newsViewModel: NewsViewModel
 lateinit var settingsViewModel: SettingsViewModel
-
 
 @Composable
 fun Navigation() {
@@ -81,11 +81,13 @@ fun Navigation() {
         SettingsViewModel.SettingsViewModelFactory(settingsDataStore)
     ).get()
 
+    val newsDatabase = NewsDatabase.getInstance(context)
+    val newsDataRepository = NewsDataRepository(newsDatabase)
 
     newsViewModel = ViewModelProvider(
         viewModelStoreOwner,
         NewsViewModel.NewsViewModelFactory(
-            newsRepository, settingsDataStore
+            newsRepository, newsDataRepository, settingsDataStore
         )
     ).get()
 
@@ -104,6 +106,20 @@ fun Navigation() {
                         )
                     },
                     actions = {
+                        val status = newsViewModel.newsItems.observeAsState().value?.status
+
+                        if (status == DataStatus.CACHED)
+                            Icon(
+                                imageVector = Icons.Default.CloudOff,
+                                contentDescription = stringResource(id = R.string.sync),
+                                tint = Color.Gray,
+                            )
+                        if (status == DataStatus.SUCCESS)
+                            Icon(
+                                imageVector = Icons.Default.CloudDone,
+                                contentDescription = stringResource(id = R.string.refresh),
+                                tint = Color.Gray,
+                            )
                         // Creating Icon button for dropdown menu
                         IconButton(onClick = { mDisplayMenu = !mDisplayMenu }) {
                             Icon(
@@ -134,7 +150,7 @@ fun Navigation() {
                         titleContentColor = MaterialTheme.colorScheme.onSurface
                     ),
                 )
-                NewsList(mainViewModel = newsViewModel, settingsViewModel = settingsViewModel) {
+                NewsView(mainViewModel = newsViewModel, settingsViewModel = settingsViewModel) {
                     navController.navigate(
                         route = Screen.NewsDetailScreen.route
                     )
@@ -220,7 +236,7 @@ fun Navigation() {
 @Composable
 fun DefaultPreview() {
     Homework3Theme {
-        NewsList(
+        NewsView(
             mainViewModel = newsViewModel,
             onNavigateClick = {},
             settingsViewModel = settingsViewModel

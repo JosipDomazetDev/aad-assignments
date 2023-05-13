@@ -24,19 +24,16 @@ import com.example.homework3.ui.ErrorView
 import com.example.homework3.viewmodel.NewsViewModel
 
 @Composable
-fun NewsList(
-    modifier: Modifier = Modifier,
+fun NewsView(
     mainViewModel: NewsViewModel,
     settingsViewModel: SettingsViewModel,
     onNavigateClick: (NewsItem) -> Unit,
 ) {
-    LaunchedEffect(Unit) {
-        mainViewModel.fetchCardsInitially()
-    }
     val settings: SettingsData = settingsViewModel.settings.collectAsState().value
     val newsObserveAsState: State<StateWrapper<List<NewsItem>>> =
         mainViewModel.newsItems.observeAsState(
-            initial = StateWrapper.init()
+            // Set to loading until actual state gets through
+            initial = StateWrapper.loading()
         )
     val newsWrapper: StateWrapper<List<NewsItem>> = newsObserveAsState.value
 
@@ -57,22 +54,15 @@ fun NewsList(
                 message = newsWrapper.message ?: stringResource(R.string.unknown)
             )
         }
-        DataStatus.SUCCESS -> {
-            val news: List<NewsItem> = newsWrapper.data!!
-
-            Column(
-                modifier
-                    .fillMaxSize()
-                    .padding(10.dp)
-            ) {
-                ReloadButton(mainViewModel)
-                LazyColumn {
-                    itemsIndexed(news) { i, newsItem ->
-                        NewsItemRow(i, newsItem, settings, onNavigateClick)
-                    }
-                }
-
-            }
+        DataStatus.CACHED, DataStatus.SUCCESS -> {
+            SuccessNewsView(
+                newsWrapper,
+                mainViewModel,
+                settings,
+                Modifier
+                    .padding(16.dp),
+                onNavigateClick
+            )
         }
         else -> {
             Text(text = stringResource(R.string.unknown))
@@ -81,13 +71,59 @@ fun NewsList(
 
 }
 
+@Composable
+private fun SuccessNewsView(
+    newsWrapper: StateWrapper<List<NewsItem>>,
+    mainViewModel: NewsViewModel,
+    settings: SettingsData,
+    modifier: Modifier,
+    onNavigateClick: (NewsItem) -> Unit
+) {
+    if (newsWrapper.data == null || newsWrapper.data.isEmpty()) {
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .wrapContentSize(align = Alignment.Center),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(text = stringResource(R.string.no_news))
+            ReloadButton(mainViewModel = mainViewModel)
+        }
+        return
+    }
+
+    val news: List<NewsItem> = newsWrapper.data
+    ListView(mainViewModel, news, settings, modifier, onNavigateClick)
+}
+
+@Composable
+private fun ListView(
+    mainViewModel: NewsViewModel,
+    news: List<NewsItem>,
+    settings: SettingsData,
+    modifier: Modifier,
+    onNavigateClick: (NewsItem) -> Unit
+) {
+    Column(
+        modifier
+            .fillMaxSize()
+            .padding(10.dp)
+    ) {
+        ReloadButton(mainViewModel)
+        LazyColumn {
+            itemsIndexed(news) { i, newsItem ->
+                NewsItemRow(i, newsItem, settings, onNavigateClick)
+            }
+        }
+
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewsItemRow(
-    i: Int,
-    newsItem: NewsItem,
-    settings: SettingsData,
-    onNavigateClick: (NewsItem) -> Unit
+    i: Int, newsItem: NewsItem, settings: SettingsData, onNavigateClick: (NewsItem) -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -96,23 +132,20 @@ fun NewsItemRow(
             .clickable {
                 newsDetailViewModel.setCurrentNewsItem(newsItem)
                 onNavigateClick(newsItem);
-            },
-        elevation = CardDefaults.cardElevation(
+            }, elevation = CardDefaults.cardElevation(
             defaultElevation = 10.dp
-        ),
-        shape = RoundedCornerShape(8.dp)
+        ), shape = RoundedCornerShape(8.dp)
 
     ) {
 
         if (i == 0) {
             Box(modifier = Modifier.fillMaxWidth()) {
-                if (settings.showImages)
-                    AsyncImage(
-                        model = newsItem.imageUrl,
-                        contentDescription = stringResource(R.string.contentDesc),
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
+                if (settings.showImages) AsyncImage(
+                    model = newsItem.imageUrl,
+                    contentDescription = stringResource(R.string.contentDesc),
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -127,13 +160,9 @@ fun NewsItemRow(
                         verticalArrangement = Arrangement.Bottom
                     ) {
                         Text(
-                            text = newsItem.title,
-                            style = MaterialTheme.typography.bodyMedium.copy(
+                            text = newsItem.title, style = MaterialTheme.typography.bodyMedium.copy(
                                 fontWeight = FontWeight.Bold
-                            ),
-                            color = Color.White,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
+                            ), color = Color.White, maxLines = 2, overflow = TextOverflow.Ellipsis
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
@@ -155,13 +184,12 @@ fun NewsItemRow(
                         .size(120.dp)
                         .clip(RoundedCornerShape(8.dp))
                 ) {
-                    if (settings.showImages)
-                        AsyncImage(
-                            model = newsItem.imageUrl,
-                            contentDescription = stringResource(R.string.contentDesc),
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
-                        )
+                    if (settings.showImages) AsyncImage(
+                        model = newsItem.imageUrl,
+                        contentDescription = stringResource(R.string.contentDesc),
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
                 }
 
                 Spacer(modifier = Modifier.width(16.dp))

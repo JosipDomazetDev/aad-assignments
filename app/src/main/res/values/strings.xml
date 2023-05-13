@@ -5,4 +5,6 @@
     <string name="back">Back</string>
     <string name="nothing">Nothing</string>
     <string name="contentDesc">News Article Image</string>
+    <string name="no_news">Database is empty, reload!</string>
+    <string name="sync">Out of sync icon</string>
 </resources>

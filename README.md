@@ -15,4 +15,4 @@ It uses:
 * `coil` for asynchronous image fetching
 * `datastore` for persisting user preferences
 
-For details have a look at this [assignment](Homework3.pdf) and at this [assignment](Homework4.pdf).
+For details have a look at this [assignment](assignments/Homework3.pdf) and at this [assignment](assignments/Homework4.pdf).

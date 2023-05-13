@@ -1,8 +1,12 @@
 package com.example.homework3.model
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 import java.util.*
 
+@Entity(tableName = "news_items")
 class NewsItem(
+    @PrimaryKey
     var id: String,
     var title: String,
     var description: String,
