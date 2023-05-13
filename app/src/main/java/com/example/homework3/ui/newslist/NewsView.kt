@@ -31,7 +31,7 @@ fun NewsView(
 ) {
     val settings: SettingsData = settingsViewModel.settings.collectAsState().value
     val newsObserveAsState: State<StateWrapper<List<NewsItem>>> =
-        mainViewModel.newsItems.observeAsState(
+        mainViewModel.newsItemsMerged.observeAsState(
             // Set to loading until actual state gets through
             initial = StateWrapper.loading()
         )

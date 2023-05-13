@@ -61,7 +61,7 @@ sealed class Screen(val route: String) {
 
 private val Context.dataStore by preferencesDataStore(name = "settings")
 
-val newsRepository = NewsRepository()
+val newsAPIRepository = NewsAPIRepository()
 
 val newsDetailViewModel = NewsDetailViewModel()
 lateinit var newsViewModel: NewsViewModel
@@ -87,7 +87,7 @@ fun Navigation() {
     newsViewModel = ViewModelProvider(
         viewModelStoreOwner,
         NewsViewModel.NewsViewModelFactory(
-            newsRepository, newsDataRepository, settingsDataStore
+            newsAPIRepository, newsDataRepository, settingsDataStore
         )
     ).get()
 
@@ -106,7 +106,7 @@ fun Navigation() {
                         )
                     },
                     actions = {
-                        val status = newsViewModel.newsItems.observeAsState().value?.status
+                        val status = newsViewModel.newsItemsMerged.observeAsState().value?.status
 
                         if (status == DataStatus.CACHED)
                             Icon(

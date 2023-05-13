@@ -7,7 +7,7 @@ import com.example.homework3.model.DataStatus
 import com.example.homework3.model.NewsItem
 import com.example.homework3.model.StateWrapper
 import com.example.homework3.repository.NewsDataRepository
-import com.example.homework3.repository.NewsRepository
+import com.example.homework3.repository.NewsAPIRepository
 import com.example.homework3.repository.SettingsDataStore
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -17,17 +17,17 @@ import java.net.MalformedURLException
 import java.text.ParseException
 
 class NewsViewModel(
-    private val repo: NewsRepository,
+    private val newsAPIRepository: NewsAPIRepository,
     private val newsDataRepository: NewsDataRepository,
     private val settingsDataStore: SettingsDataStore
 ) : ViewModel() {
 
-    private val _newsItemsApi =
+    private val _newsItemsAPI =
         MutableLiveData<StateWrapper<List<NewsItem>>>(StateWrapper.cached(null))
 
     // Combine the news items from the database with the state of the API call
-    val newsItems: LiveData<StateWrapper<List<NewsItem>>> =
-        _newsItemsApi.switchMap { stateWrapper ->
+    val newsItemsMerged: LiveData<StateWrapper<List<NewsItem>>> =
+        _newsItemsAPI.switchMap { stateWrapper ->
             newsDataRepository.newsItems.map { newsItems ->
                 combineStateWithNewsItems(stateWrapper, newsItems)
             }
@@ -53,14 +53,14 @@ class NewsViewModel(
 
     private fun fetchCards() {
         viewModelScope.launch {
-            _newsItemsApi.postValue(StateWrapper.loading())
+            _newsItemsAPI.postValue(StateWrapper.loading())
             val newsFeedUrl = settingsDataStore.settings.first().newsFeedUrl
             newsDataRepository.deleteAllNewsItems()
 
             try {
 
-                val fetchCards = repo.fetchNews(newsFeedUrl)
-                _newsItemsApi.postValue(fetchCards)
+                val fetchCards = newsAPIRepository.fetchNews(newsFeedUrl)
+                _newsItemsAPI.postValue(fetchCards)
 
                 // Store the fetched news items into the database
                 if (fetchCards.status == DataStatus.SUCCESS) {
@@ -72,7 +72,7 @@ class NewsViewModel(
                     "Fetched from endpoint with state:" + fetchCards.status.toString()
                 )
             } catch (ex: MalformedURLException) {
-                _newsItemsApi.postValue(
+                _newsItemsAPI.postValue(
                     StateWrapper.error(
                         "MalformedURLException: Cannot fetch from $newsFeedUrl",
                         ex
@@ -80,13 +80,13 @@ class NewsViewModel(
                 )
                 ex.printStackTrace()
             } catch (ex: IOException) {
-                _newsItemsApi.postValue(StateWrapper.error("Error occurred while fetching.", ex))
+                _newsItemsAPI.postValue(StateWrapper.error("Error occurred while fetching.", ex))
                 ex.printStackTrace()
             } catch (ex: ParseException) {
-                _newsItemsApi.postValue(StateWrapper.error("Error occurred while parsing.", ex))
+                _newsItemsAPI.postValue(StateWrapper.error("Error occurred while parsing.", ex))
                 ex.printStackTrace()
             } catch (ex: XmlPullParserException) {
-                _newsItemsApi.postValue(StateWrapper.error("Error occurred while parsing.", ex))
+                _newsItemsAPI.postValue(StateWrapper.error("Error occurred while parsing.", ex))
                 ex.printStackTrace()
             }
         }
@@ -98,7 +98,7 @@ class NewsViewModel(
     }
 
     class NewsViewModelFactory(
-        private val newsRepository: NewsRepository,
+        private val newsAPIRepository: NewsAPIRepository,
         private val newsDataRepository: NewsDataRepository,
         private val settingsDataStore: SettingsDataStore
     ) : ViewModelProvider.Factory {
@@ -107,7 +107,7 @@ class NewsViewModel(
                 @Suppress("UNCHECKED_CAST")
                 return NewsViewModel(
                     settingsDataStore = settingsDataStore,
-                    repo = newsRepository,
+                    newsAPIRepository = newsAPIRepository,
                     newsDataRepository = newsDataRepository
                 ) as T
             }

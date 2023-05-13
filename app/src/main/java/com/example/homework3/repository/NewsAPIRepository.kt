@@ -12,7 +12,7 @@ import java.net.URL
 import java.util.*
 
 
-class NewsRepository {
+class NewsAPIRepository {
 
     suspend fun fetchNews(newsFeedUrl: String): StateWrapper<List<NewsItem>> = withContext(Dispatchers.IO) {
         val items: List<NewsItem> = loadXmlFromNetwork(newsFeedUrl)
