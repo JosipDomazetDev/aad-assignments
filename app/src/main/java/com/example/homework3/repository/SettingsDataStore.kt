@@ -10,10 +10,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import java.io.IOException
 
-private const val SETTINGS_PREFERENCES_NAME = "settings_preferences"
-
 class SettingsDataStore(private val dataStore: DataStore<Preferences>) {
-    private val Context.dataStore by preferencesDataStore(name = "settings")
 
     private object PreferencesKeys {
          val NEWS_FEED_URL = stringPreferencesKey("news_feed_url")

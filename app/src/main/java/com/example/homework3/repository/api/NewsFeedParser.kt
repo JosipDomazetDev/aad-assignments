@@ -1,4 +1,4 @@
-package com.example.homework3.repository
+package com.example.homework3.repository.api
 
 import android.util.Xml
 import com.example.homework3.model.NewsItem

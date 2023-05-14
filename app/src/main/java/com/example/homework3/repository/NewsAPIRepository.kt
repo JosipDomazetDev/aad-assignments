@@ -2,6 +2,7 @@ package com.example.homework3.repository
 
 import com.example.homework3.model.NewsItem
 import com.example.homework3.model.StateWrapper
+import com.example.homework3.repository.api.NewsFeedParser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.xmlpull.v1.XmlPullParserException
