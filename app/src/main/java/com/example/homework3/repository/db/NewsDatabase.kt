@@ -18,11 +18,17 @@ abstract class NewsDatabase : RoomDatabase() {
 
         fun getInstance(context: Context): NewsDatabase {
             return INSTANCE ?: synchronized(this) {
+                // double checking
+                val tempInstance = INSTANCE
+                if (tempInstance != null) {
+                    return tempInstance
+                }
+
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     NewsDatabase::class.java,
                     "news_database"
-                ).build()
+                ).fallbackToDestructiveMigration().build()
                 INSTANCE = instance
                 instance
             }

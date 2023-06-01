@@ -1,9 +1,11 @@
 package com.example.homework3.repository
 
-import android.content.Context
 import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.*
-import androidx.datastore.preferences.preferencesDataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.stringPreferencesKey
 import com.example.homework3.model.SettingsData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -26,7 +28,7 @@ class SettingsDataStore(private val dataStore: DataStore<Preferences>) {
         }
     }.map { preferences ->
         SettingsData(
-            newsFeedUrl = preferences[PreferencesKeys.NEWS_FEED_URL] ?: "",
+            newsFeedUrl = preferences[PreferencesKeys.NEWS_FEED_URL] ?: "https://www.engadget.com/rss.xml",
             showImages = preferences[PreferencesKeys.SHOW_IMAGES] ?: true,
             downloadImagesInBackground = preferences[PreferencesKeys.DOWNLOAD_IMAGES_IN_BACKGROUND] ?: true
         )
