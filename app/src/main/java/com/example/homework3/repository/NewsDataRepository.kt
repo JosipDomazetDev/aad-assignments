@@ -6,6 +6,7 @@ import com.example.homework3.repository.db.NewsDatabase
 import com.example.homework3.repository.db.NewsItemDao
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.Date
 
 class NewsDataRepository(database: NewsDatabase) {
     private val newsItemDao: NewsItemDao = database.newsItemDao()
@@ -21,6 +22,16 @@ class NewsDataRepository(database: NewsDatabase) {
     suspend fun deleteAllNewsItems() {
         withContext(Dispatchers.IO) {
             newsItemDao.deleteAllNewsItems()
+        }
+    }
+
+    suspend fun isEmpty(): Boolean {
+        return newsItemDao.getSize() == 0
+    }
+
+    suspend fun deleteOldNewsItems(pastDate: Date) {
+        withContext(Dispatchers.IO) {
+            newsItemDao.deleteOlderThan(pastDate.time)
         }
     }
 }

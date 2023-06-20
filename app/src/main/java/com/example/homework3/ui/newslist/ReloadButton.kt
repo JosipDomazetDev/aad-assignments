@@ -14,7 +14,7 @@ import com.example.homework3.viewmodel.NewsViewModel
 fun ReloadButton(mainViewModel: NewsViewModel) {
     Button(
         onClick = {
-            mainViewModel.reload()
+            mainViewModel.reload(isSoftMode = true)
         },
         modifier = Modifier
             .padding(10.dp)

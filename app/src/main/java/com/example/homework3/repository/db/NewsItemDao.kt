@@ -18,4 +18,10 @@ interface NewsItemDao {
 
     @Query("DELETE FROM news_items")
     suspend fun deleteAllNewsItems()
+
+    @Query("SELECT COUNT(*) FROM news_items")
+    suspend fun getSize(): Int
+
+    @Query("DELETE FROM news_items WHERE publicationDate < :deletionDate")
+    suspend fun deleteOlderThan(deletionDate: Long)
 }

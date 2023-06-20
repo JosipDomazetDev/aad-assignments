@@ -2,25 +2,34 @@ package com.example.homework3.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.*
+import androidx.work.WorkInfo
 import com.example.homework3.LogKeys
 import com.example.homework3.model.DataStatus
 import com.example.homework3.model.NewsItem
 import com.example.homework3.model.StateWrapper
 import com.example.homework3.repository.NewsDataRepository
-import com.example.homework3.repository.NewsAPIRepository
 import com.example.homework3.repository.SettingsDataStore
+import com.example.homework3.worker.NewsWorkerQueueManager
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
-import org.xmlpull.v1.XmlPullParserException
-import java.io.IOException
-import java.net.MalformedURLException
-import java.text.ParseException
 
 class NewsViewModel(
-    private val newsAPIRepository: NewsAPIRepository,
     private val newsDataRepository: NewsDataRepository,
-    private val settingsDataStore: SettingsDataStore
+    private val settingsDataStore: SettingsDataStore,
+    private val newsWorkerQueueManager: NewsWorkerQueueManager
 ) : ViewModel() {
+
+    init {
+        viewModelScope.launch {
+            if (newsDataRepository.isEmpty()) {
+                reload(isSoftMode = false)
+            }
+
+            val newsFeedUrl = settingsDataStore.settings.first().newsFeedUrl
+            newsWorkerQueueManager.enqueuePeriodicDownloadTask(newsFeedUrl)
+        }
+    }
 
     private val _newsItemsAPI =
         MutableLiveData<StateWrapper<List<NewsItem>>>(StateWrapper.cached(null))
@@ -34,81 +43,74 @@ class NewsViewModel(
         }
 
     private fun combineStateWithNewsItems(
-        stateWrapper: StateWrapper<List<NewsItem>>,
-        newsItems: List<NewsItem>
+        stateWrapper: StateWrapper<List<NewsItem>>, newsItems: List<NewsItem>
     ): StateWrapper<List<NewsItem>> {
         return when (stateWrapper.status) {
             DataStatus.SUCCESS -> {
                 StateWrapper.success(newsItems)
             }
+
             DataStatus.CACHED -> {
                 Log.i(LogKeys.BASIC_KEY, "Loaded ${newsItems.size} news items from cache")
                 StateWrapper.cached(newsItems)
             }
+
             else -> {
                 stateWrapper
             }
         }
     }
 
-    private fun fetchCards() {
+    fun reload(isSoftMode: Boolean, urlHasChanged: Boolean = false) {
         viewModelScope.launch {
-            _newsItemsAPI.postValue(StateWrapper.loading())
+            Log.i(LogKeys.BASIC_KEY, "Reloading...")
             val newsFeedUrl = settingsDataStore.settings.first().newsFeedUrl
-            newsDataRepository.deleteAllNewsItems()
 
-            try {
+            if (urlHasChanged) {
+                // Reset the periodic download task because the URL has changed
+                newsWorkerQueueManager.enqueuePeriodicDownloadTask(newsFeedUrl)
+            }
 
-                val fetchCards = newsAPIRepository.fetchNews(newsFeedUrl)
-                _newsItemsAPI.postValue(fetchCards)
+            val asFlow =
+                newsWorkerQueueManager.enqueueDownloadTask(newsFeedUrl, isSoftMode).asFlow()
 
-                // Store the fetched news items into the database
-                if (fetchCards.status == DataStatus.SUCCESS) {
-                    newsDataRepository.insertNewsItems(fetchCards.data!!)
+            asFlow.collect {
+                if (it == null) {
+                    _newsItemsAPI.postValue(StateWrapper.loading())
+                } else when (it.state) {
+                    WorkInfo.State.SUCCEEDED -> {
+                        _newsItemsAPI.postValue(StateWrapper.success(null))
+                        this.coroutineContext.job.cancel()
+                    }
+
+                    WorkInfo.State.FAILED -> {
+                        _newsItemsAPI.postValue(
+                            StateWrapper.error(
+                                "Error occurred while fetching.", null
+                            )
+                        )
+                        this.coroutineContext.job.cancel()
+                    }
+
+                    else -> {
+                        _newsItemsAPI.postValue(StateWrapper.loading())
+                    }
                 }
-
-                Log.i(
-                    LogKeys.BASIC_KEY,
-                    "Fetched from endpoint with state:" + fetchCards.status.toString()
-                )
-            } catch (ex: MalformedURLException) {
-                _newsItemsAPI.postValue(
-                    StateWrapper.error(
-                        "MalformedURLException: Cannot fetch from $newsFeedUrl",
-                        ex
-                    )
-                )
-                ex.printStackTrace()
-            } catch (ex: IOException) {
-                _newsItemsAPI.postValue(StateWrapper.error("Error occurred while fetching.", ex))
-                ex.printStackTrace()
-            } catch (ex: ParseException) {
-                _newsItemsAPI.postValue(StateWrapper.error("Error occurred while parsing.", ex))
-                ex.printStackTrace()
-            } catch (ex: XmlPullParserException) {
-                _newsItemsAPI.postValue(StateWrapper.error("Error occurred while parsing.", ex))
-                ex.printStackTrace()
             }
         }
     }
 
-    fun reload() {
-        Log.i(LogKeys.BASIC_KEY, "Reloading...")
-        fetchCards()
-    }
-
     class NewsViewModelFactory(
-        private val newsAPIRepository: NewsAPIRepository,
         private val newsDataRepository: NewsDataRepository,
-        private val settingsDataStore: SettingsDataStore
+        private val settingsDataStore: SettingsDataStore,
+        private val newsWorkerQueueManager: NewsWorkerQueueManager
     ) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(NewsViewModel::class.java)) {
-                @Suppress("UNCHECKED_CAST")
-                return NewsViewModel(
+                @Suppress("UNCHECKED_CAST") return NewsViewModel(
+                    newsDataRepository = newsDataRepository,
                     settingsDataStore = settingsDataStore,
-                    newsAPIRepository = newsAPIRepository,
-                    newsDataRepository = newsDataRepository
+                    newsWorkerQueueManager = newsWorkerQueueManager
                 ) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class")

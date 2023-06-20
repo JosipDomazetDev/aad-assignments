@@ -35,6 +35,7 @@ import com.example.homework3.repository.db.NewsDatabase
 import com.example.homework3.ui.theme.Homework3Theme
 import com.example.homework3.viewmodel.NewsDetailViewModel
 import com.example.homework3.viewmodel.NewsViewModel
+import com.example.homework3.worker.NewsWorkerQueueManager
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -61,8 +62,6 @@ sealed class Screen(val route: String) {
 
 private val Context.dataStore by preferencesDataStore(name = "settings")
 
-val newsAPIRepository = NewsAPIRepository()
-
 val newsDetailViewModel = NewsDetailViewModel()
 lateinit var newsViewModel: NewsViewModel
 lateinit var settingsViewModel: SettingsViewModel
@@ -87,7 +86,9 @@ fun Navigation() {
     newsViewModel = ViewModelProvider(
         viewModelStoreOwner,
         NewsViewModel.NewsViewModelFactory(
-            newsAPIRepository, newsDataRepository, settingsDataStore
+            newsDataRepository,
+            settingsDataStore,
+            NewsWorkerQueueManager(context.applicationContext)
         )
     ).get()
 
@@ -223,7 +224,7 @@ fun Navigation() {
                     },
                 )
                 SettingsScreen(settingsViewModel = settingsViewModel) {
-                    newsViewModel.reload()
+                    newsViewModel.reload(isSoftMode = false, urlHasChanged = true)
                 }
             }
 
