@@ -1,4 +1,4 @@
-package com.example.homework3.repository.db
+package com.example.homework3.repository.persistence
 
 import androidx.lifecycle.LiveData
 import androidx.room.Dao

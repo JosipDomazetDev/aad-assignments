@@ -47,12 +47,12 @@ import androidx.navigation.navDeepLink
 import com.example.homework3.model.DataStatus
 import com.example.homework3.repository.NewsDataRepository
 import com.example.homework3.repository.SettingsDataStore
-import com.example.homework3.repository.db.NewsDatabase
+import com.example.homework3.repository.persistence.NewsDatabase
 import com.example.homework3.ui.notification.NotificationManager
 import com.example.homework3.ui.theme.Homework3Theme
 import com.example.homework3.viewmodel.NewsDetailViewModel
 import com.example.homework3.viewmodel.NewsViewModel
-import com.example.homework3.worker.ImageManager
+import com.example.homework3.repository.persistence.ImageManager
 import com.example.homework3.worker.NewsWorkerQueueManager
 
 class MainActivity : ComponentActivity() {

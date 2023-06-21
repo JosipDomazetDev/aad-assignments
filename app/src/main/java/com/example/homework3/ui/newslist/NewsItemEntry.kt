@@ -19,7 +19,7 @@ import coil.compose.AsyncImage
 import com.example.homework3.R
 import com.example.homework3.model.*
 import com.example.homework3.newsDetailViewModel
-import com.example.homework3.worker.ImageManager
+import com.example.homework3.repository.persistence.ImageManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

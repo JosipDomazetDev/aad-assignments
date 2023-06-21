@@ -2,9 +2,9 @@ package com.example.homework3.repository
 
 import androidx.lifecycle.LiveData
 import com.example.homework3.model.NewsItem
-import com.example.homework3.repository.db.NewsDatabase
-import com.example.homework3.repository.db.NewsItemDao
-import com.example.homework3.worker.ImageManager
+import com.example.homework3.repository.persistence.ImageManager
+import com.example.homework3.repository.persistence.NewsDatabase
+import com.example.homework3.repository.persistence.NewsItemDao
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.Date

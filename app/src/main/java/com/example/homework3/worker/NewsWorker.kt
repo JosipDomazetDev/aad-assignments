@@ -7,9 +7,10 @@ import androidx.work.WorkerParameters
 import com.example.homework3.LogKeys
 import com.example.homework3.model.DataStatus
 import com.example.homework3.model.NewsItem
+import com.example.homework3.repository.persistence.ImageManager
 import com.example.homework3.repository.NewsAPIRepository
 import com.example.homework3.repository.NewsDataRepository
-import com.example.homework3.repository.db.NewsDatabase
+import com.example.homework3.repository.persistence.NewsDatabase
 import com.example.homework3.ui.notification.NotificationManager
 import java.util.Calendar
 import java.util.Date

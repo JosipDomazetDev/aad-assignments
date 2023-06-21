@@ -41,7 +41,7 @@ import coil.compose.AsyncImage
 import com.example.homework3.model.NewsItem
 import com.example.homework3.model.SettingsData
 import com.example.homework3.viewmodel.NewsDetailViewModel
-import com.example.homework3.worker.ImageManager
+import com.example.homework3.repository.persistence.ImageManager
 
 
 @Composable
