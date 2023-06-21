@@ -8,7 +8,7 @@ Furthermore, the app allows the user to set some settings and uses the local dev
 accordance to Googles' new [Material You](https://material.io/blog/announcing-material-you)
 design philosophy.
 
-<img src="docs/app.png" width=40% height=40%>
+<img src="docs/appcombined.png" width=40% height=40%>
 
 It uses:
 
