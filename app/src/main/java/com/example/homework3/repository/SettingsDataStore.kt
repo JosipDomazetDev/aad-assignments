@@ -30,7 +30,7 @@ class SettingsDataStore(private val dataStore: DataStore<Preferences>) {
         SettingsData(
             newsFeedUrl = preferences[PreferencesKeys.NEWS_FEED_URL] ?: "https://www.engadget.com/rss.xml",
             showImages = preferences[PreferencesKeys.SHOW_IMAGES] ?: true,
-            downloadImagesInBackground = preferences[PreferencesKeys.DOWNLOAD_IMAGES_IN_BACKGROUND] ?: true
+            downloadImagesInBackground = preferences[PreferencesKeys.DOWNLOAD_IMAGES_IN_BACKGROUND] ?: false
         )
     }
 
