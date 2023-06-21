@@ -1,8 +1,13 @@
 package com.example.homework3.repository.persistence
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.drawable.BitmapDrawable
 import android.util.Log
+import coil.ImageLoader
 import coil.request.ImageRequest
+import coil.request.SuccessResult
 import com.example.homework3.LogKeys
 import com.example.homework3.model.NewsItem
 import kotlinx.coroutines.Dispatchers
@@ -84,5 +89,36 @@ class ImageManager(private val context: Context) {
                 newsItem.imageUrl
             }
         }
+
+        suspend fun getLocalImage(context: Context, newsItem: NewsItem) : Bitmap {
+            val cachedImageFile = context.cacheDir.resolve(newsItem.getImagePath())
+
+            return withContext(Dispatchers.IO) {
+                BitmapFactory.decodeFile(cachedImageFile.absolutePath)
+            }
+        }
+
+
+        suspend fun getUrlImage(url: String, context: Context): Bitmap? {
+            return withContext(Dispatchers.IO) {
+                try {
+                    val imageLoader = ImageLoader.Builder(context)
+                        .build()
+
+                    val request = ImageRequest.Builder(context)
+                        .data(url)
+                        .build()
+
+                    val result = (imageLoader.execute(request) as SuccessResult).drawable
+                    if (result is BitmapDrawable) {
+                        return@withContext result.bitmap
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+                return@withContext null
+            }
+        }
+
     }
 }

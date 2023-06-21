@@ -55,7 +55,7 @@ class NewsWorker(
                 val oldNewsItems = newsDataRepository.getAllNewsItemsRaw()
                 newsDataRepository.insertNewsItems(newsItemFromAPI, downloadImagesInBackground)
 
-                createNotifications(newsItemFromAPI, oldNewsItems, applicationContext)
+                createNotifications(newsItemFromAPI, oldNewsItems, applicationContext, downloadImagesInBackground)
 
                 Log.i(
                     LogKeys.BASIC_KEY,
@@ -81,17 +81,18 @@ class NewsWorker(
         newsDataRepository.deleteOldNewsItems(fiveDaysAgo)
     }
 
-    private fun createNotifications(
+    private suspend fun createNotifications(
         newsItems: List<NewsItem>,
         oldNewsItems: List<NewsItem>?,
-        applicationContext: Context
+        applicationContext: Context,
+        downloadImagesInBackground: Boolean
     ) {
         val newNewsItems = newsItems.filter { newsItem ->
             oldNewsItems?.none { it.id == newsItem.id } ?: true
         }
 
         for (newsItem in newNewsItems) {
-            NotificationManager.showNotification(applicationContext, newsItem)
+            NotificationManager.showNotification(applicationContext, newsItem, downloadImagesInBackground)
         }
     }
 }

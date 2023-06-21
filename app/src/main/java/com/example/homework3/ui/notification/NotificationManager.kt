@@ -16,13 +16,18 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.TaskStackBuilder
 import com.example.homework3.R
 import com.example.homework3.model.NewsItem
+import com.example.homework3.repository.persistence.ImageManager
 
 object NotificationManager {
-    const val CHANNEL = "NEWS_CHANNEL"
-    var notficiationId = 1
+    private const val CHANNEL = "NEWS_CHANNEL"
+    var notificationId = 1
     var PERMISSION_REQUEST_CODE = 1
 
-    fun showNotification(context: Context, newsItem: NewsItem) {
+    suspend fun showNotification(
+        context: Context,
+        newsItem: NewsItem,
+        downloadImagesInBackground: Boolean
+    ) {
         val intent = Intent(
             Intent.ACTION_VIEW,
             Uri.parse("news://show/${newsItem.id}")
@@ -30,7 +35,7 @@ object NotificationManager {
 
         val pendingIntent = TaskStackBuilder.create(context)
             .addNextIntentWithParentStack(intent)
-            .getPendingIntent(notficiationId, PendingIntent.FLAG_IMMUTABLE)
+            .getPendingIntent(notificationId, PendingIntent.FLAG_IMMUTABLE)
 
         val notificationBuilder = NotificationCompat.Builder(context, CHANNEL)
             .setSmallIcon(R.mipmap.ic_launcher_round)
@@ -39,10 +44,16 @@ object NotificationManager {
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
 
+        if (downloadImagesInBackground) {
+            notificationBuilder.setLargeIcon(ImageManager.getLocalImage(context, newsItem))
+        } else {
+            notificationBuilder.setLargeIcon(ImageManager.getUrlImage(newsItem.imageUrl, context))
+        }
+
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        notificationManager.notify(notficiationId++, notificationBuilder.build())
+        notificationManager.notify(notificationId++, notificationBuilder.build())
     }
 
 
