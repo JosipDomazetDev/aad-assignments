@@ -13,6 +13,12 @@ class NewsDataRepository(database: NewsDatabase) {
 
     val newsItems: LiveData<List<NewsItem>> = newsItemDao.getAllNewsItems()
 
+    suspend fun getAllNewsItemsRaw(): List<NewsItem> {
+        return withContext(Dispatchers.IO) {
+            newsItemDao.getAllNewsItemsRaw()
+        }
+    }
+
     suspend fun insertNewsItems(newsItems: List<NewsItem>) {
         withContext(Dispatchers.IO) {
             newsItemDao.insertNewsItems(newsItems)

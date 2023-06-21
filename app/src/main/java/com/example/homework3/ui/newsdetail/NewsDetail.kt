@@ -31,7 +31,7 @@ fun NewsDetail(newsDetailViewModel: NewsDetailViewModel, settingsViewModel: Sett
     val newsItem: NewsItem? = newsDetailViewModel.getCurrentNewsItem().value
 
     if (newsItem == null) {
-        Text(stringResource(R.string.nothing))
+        CircularProgressIndicator()
         return
     }
     val uriHandler = LocalUriHandler.current

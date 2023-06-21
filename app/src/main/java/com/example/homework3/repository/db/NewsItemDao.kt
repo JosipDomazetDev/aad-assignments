@@ -10,8 +10,11 @@ import com.example.homework3.model.NewsItem
 
 @Dao
 interface NewsItemDao {
-    @Query("SELECT * FROM news_items")
+    @Query("SELECT * FROM news_items ORDER BY publicationDate DESC")
     fun getAllNewsItems(): LiveData<List<NewsItem>>
+
+    @Query("SELECT * FROM news_items")
+    fun getAllNewsItemsRaw(): List<NewsItem>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertNewsItems(newsItems: List<NewsItem>)

@@ -10,10 +10,25 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.CloudDone
+import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SmallTopAppBar
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -28,10 +43,12 @@ import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navDeepLink
 import com.example.homework3.model.DataStatus
-import com.example.homework3.repository.*
 import com.example.homework3.repository.NewsDataRepository
+import com.example.homework3.repository.SettingsDataStore
 import com.example.homework3.repository.db.NewsDatabase
+import com.example.homework3.ui.notification.NotificationManager
 import com.example.homework3.ui.theme.Homework3Theme
 import com.example.homework3.viewmodel.NewsDetailViewModel
 import com.example.homework3.viewmodel.NewsViewModel
@@ -66,12 +83,16 @@ val newsDetailViewModel = NewsDetailViewModel()
 lateinit var newsViewModel: NewsViewModel
 lateinit var settingsViewModel: SettingsViewModel
 
+
 @Composable
 fun Navigation() {
     val context = LocalContext.current
     val viewModelStoreOwner = checkNotNull(LocalViewModelStoreOwner.current) {
         "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
     }
+
+    NotificationManager.createNotificationChannel(context)
+    NotificationManager.requestPermission(context)
 
     val settingsDataStore = SettingsDataStore(context.dataStore)
 
@@ -160,7 +181,16 @@ fun Navigation() {
             }
         }
 
-        composable(Screen.NewsDetailScreen.route) {
+        composable(
+            Screen.NewsDetailScreen.route,
+            deepLinks = listOf(navDeepLink { uriPattern = "news://show/{newsItemId}" }),
+        ) {
+            val newsItemId = it.arguments?.getString("newsItemId") ?: ""
+            newsViewModel.newsItemsMerged.observeAsState().value?.data?.find { it.id == newsItemId }
+                ?.let { newsItem ->
+                    newsDetailViewModel.setCurrentNewsItem(newsItem)
+                }
+
             Column {
                 SmallTopAppBar(
                     title = {

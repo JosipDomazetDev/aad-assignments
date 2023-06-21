@@ -19,24 +19,20 @@ private const val SINGLE_NEWSWORKER_NAME = "SINGLE_NEWSWORKER"
 
 class NewsWorkerQueueManager(private val context: Context) {
     fun enqueueDownloadTask(
-        url: String,
-        isSoftMode: Boolean
+        url: String, isSoftMode: Boolean
     ): LiveData<WorkInfo> {
         val workManager = WorkManager.getInstance(context)
 
-        val request = OneTimeWorkRequestBuilder<NewsWorker>()
-            .setConstraints(
-                Constraints(
-                    requiresBatteryNotLow = true
-                )
+        val request = OneTimeWorkRequestBuilder<NewsWorker>().setConstraints(
+            Constraints(
+                requiresBatteryNotLow = true
             )
-            .setInputData(
-                inputData = workDataOf(
-                    NewsWorker.URL to url,
-                    NewsWorker.SOFT_MODE to isSoftMode,
-                )
+        ).setInputData(
+            inputData = workDataOf(
+                NewsWorker.URL to url,
+                NewsWorker.SOFT_MODE to isSoftMode,
             )
-            .build()
+        ).build()
         workManager.enqueueUniqueWork(SINGLE_NEWSWORKER_NAME, ExistingWorkPolicy.REPLACE, request)
 
         return workManager.getWorkInfoByIdLiveData(request.id)
@@ -48,23 +44,25 @@ class NewsWorkerQueueManager(private val context: Context) {
     ) {
         val workManager = WorkManager.getInstance(context)
 
+        val repeatInterval: Long = 30
         val periodicRequest = PeriodicWorkRequestBuilder<NewsWorker>(
-            30, TimeUnit.MINUTES
-        ).setConstraints(
-            Constraints(
-                requiresBatteryNotLow = true
-            )
-        ).setInputData(
-            inputData = workDataOf(
-                NewsWorker.URL to url,
-                NewsWorker.SOFT_MODE to true,
-            )
+            repeatInterval, TimeUnit.MINUTES
         )
+            .setInitialDelay(repeatInterval, TimeUnit.MINUTES)
+            .setConstraints(
+                Constraints(
+                    requiresBatteryNotLow = true
+                )
+            )
+            .setInputData(
+                inputData = workDataOf(
+                    NewsWorker.URL to url,
+                    NewsWorker.SOFT_MODE to true,
+                )
+            )
 
         workManager.enqueueUniquePeriodicWork(
-            PERIODIC_NEWSWORKER_NAME,
-            ExistingPeriodicWorkPolicy.UPDATE,
-            periodicRequest.build()
+            PERIODIC_NEWSWORKER_NAME, ExistingPeriodicWorkPolicy.UPDATE, periodicRequest.build()
         )
 
         Log.i(LogKeys.BASIC_KEY, "Enqueued periodic task")

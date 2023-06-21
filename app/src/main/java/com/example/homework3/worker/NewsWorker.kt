@@ -6,9 +6,11 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.example.homework3.LogKeys
 import com.example.homework3.model.DataStatus
+import com.example.homework3.model.NewsItem
 import com.example.homework3.repository.NewsAPIRepository
 import com.example.homework3.repository.NewsDataRepository
 import com.example.homework3.repository.db.NewsDatabase
+import com.example.homework3.ui.notification.NotificationManager
 import java.util.Calendar
 import java.util.Date
 
@@ -42,19 +44,16 @@ class NewsWorker(
                    Log.i(LogKeys.BASIC_KEY, "Clearing all news items")
                    newsDataRepository.deleteAllNewsItems()
                 }
-                val newsItems = fetchCards.data!!
-                newsDataRepository.insertNewsItems(newsItems)
+
+                val newsItemFromAPI = fetchCards.data!!
+                val oldNewsItems = newsDataRepository.getAllNewsItemsRaw()
+                newsDataRepository.insertNewsItems(newsItemFromAPI)
 
                 if (isSoftMode){
-                    Log.i(LogKeys.BASIC_KEY, "Clearing news items older than 5 days")
-                    // Delete news items older than five days
-                    val currentDate = Date()
-                    val fiveDaysAgo = Calendar.getInstance().apply {
-                        time = currentDate
-                        add(Calendar.DAY_OF_MONTH, -5)
-                    }.time
-                    newsDataRepository.deleteOldNewsItems(fiveDaysAgo)
+                    deleteNewsItemOlderThanFiveDays(newsDataRepository)
                 }
+
+                createNotifications(newsItemFromAPI, oldNewsItems, applicationContext)
 
                 Log.i(
                     LogKeys.BASIC_KEY,
@@ -65,6 +64,31 @@ class NewsWorker(
             Result.success()
         } catch (e: Exception) {
             Result.failure()
+        }
+    }
+
+    private suspend fun deleteNewsItemOlderThanFiveDays(newsDataRepository: NewsDataRepository) {
+        Log.i(LogKeys.BASIC_KEY, "Clearing news items older than 5 days")
+
+        val currentDate = Date()
+        val fiveDaysAgo = Calendar.getInstance().apply {
+            time = currentDate
+            add(Calendar.DAY_OF_MONTH, -5)
+        }.time
+        newsDataRepository.deleteOldNewsItems(fiveDaysAgo)
+    }
+
+    private fun createNotifications(
+        newsItems: List<NewsItem>,
+        oldNewsItems: List<NewsItem>?,
+        applicationContext: Context
+    ) {
+        val newNewsItems = newsItems.filter { newsItem ->
+            oldNewsItems?.none { it.id == newsItem.id } ?: true
+        }
+
+        for (newsItem in newNewsItems) {
+            NotificationManager.showNotification(applicationContext, newsItem)
         }
     }
 }
