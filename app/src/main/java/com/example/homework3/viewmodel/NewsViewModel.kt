@@ -26,8 +26,12 @@ class NewsViewModel(
                 reload(isSoftMode = false)
             }
 
-            val newsFeedUrl = settingsDataStore.settings.first().newsFeedUrl
-            newsWorkerQueueManager.enqueuePeriodicDownloadTask(newsFeedUrl)
+            val settings = settingsDataStore.settings.first()
+
+            newsWorkerQueueManager.enqueuePeriodicDownloadTask(
+                settings.newsFeedUrl,
+                settings.downloadImagesInBackground
+            )
         }
     }
 
@@ -61,18 +65,31 @@ class NewsViewModel(
         }
     }
 
-    fun reload(isSoftMode: Boolean, urlHasChanged: Boolean = false) {
+    fun reload(
+        isSoftMode: Boolean,
+        urlHasChanged: Boolean = false,
+    ) {
         viewModelScope.launch {
             Log.i(LogKeys.BASIC_KEY, "Reloading...")
-            val newsFeedUrl = settingsDataStore.settings.first().newsFeedUrl
+
+            val settings = settingsDataStore.settings.first()
+            val downloadImagesInBackground = settings.downloadImagesInBackground
+            val newsFeedUrl = settings.newsFeedUrl
 
             if (urlHasChanged) {
                 // Reset the periodic download task because the URL has changed
-                newsWorkerQueueManager.enqueuePeriodicDownloadTask(newsFeedUrl)
+                newsWorkerQueueManager.enqueuePeriodicDownloadTask(
+                    newsFeedUrl,
+                    downloadImagesInBackground
+                )
             }
 
             val asFlow =
-                newsWorkerQueueManager.enqueueDownloadTask(newsFeedUrl, isSoftMode).asFlow()
+                newsWorkerQueueManager.enqueueDownloadTask(
+                    newsFeedUrl,
+                    isSoftMode,
+                    downloadImagesInBackground
+                ).asFlow()
 
             asFlow.collect {
                 if (it == null) {

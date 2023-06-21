@@ -4,11 +4,12 @@ import androidx.lifecycle.LiveData
 import com.example.homework3.model.NewsItem
 import com.example.homework3.repository.db.NewsDatabase
 import com.example.homework3.repository.db.NewsItemDao
+import com.example.homework3.worker.ImageManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.Date
 
-class NewsDataRepository(database: NewsDatabase) {
+class NewsDataRepository(database: NewsDatabase, private val imageManager: ImageManager) {
     private val newsItemDao: NewsItemDao = database.newsItemDao()
 
     val newsItems: LiveData<List<NewsItem>> = newsItemDao.getAllNewsItems()
@@ -19,11 +20,15 @@ class NewsDataRepository(database: NewsDatabase) {
         }
     }
 
-    suspend fun insertNewsItems(newsItems: List<NewsItem>) {
+    suspend fun insertNewsItems(newsItems: List<NewsItem>, downloadImagesInBackground: Boolean) {
         withContext(Dispatchers.IO) {
             newsItemDao.insertNewsItems(newsItems)
+            if (downloadImagesInBackground) {
+                imageManager.downloadImages(getAllNewsItemsRaw())
+            }
         }
     }
+
 
     suspend fun deleteAllNewsItems() {
         withContext(Dispatchers.IO) {

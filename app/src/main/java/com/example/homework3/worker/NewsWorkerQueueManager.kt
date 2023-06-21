@@ -19,7 +19,7 @@ private const val SINGLE_NEWSWORKER_NAME = "SINGLE_NEWSWORKER"
 
 class NewsWorkerQueueManager(private val context: Context) {
     fun enqueueDownloadTask(
-        url: String, isSoftMode: Boolean
+        url: String, isSoftMode: Boolean, downloadImagesInBackground: Boolean
     ): LiveData<WorkInfo> {
         val workManager = WorkManager.getInstance(context)
 
@@ -31,6 +31,7 @@ class NewsWorkerQueueManager(private val context: Context) {
             inputData = workDataOf(
                 NewsWorker.URL to url,
                 NewsWorker.SOFT_MODE to isSoftMode,
+                NewsWorker.DOWNLOAD_IMAGES to downloadImagesInBackground,
             )
         ).build()
         workManager.enqueueUniqueWork(SINGLE_NEWSWORKER_NAME, ExistingWorkPolicy.REPLACE, request)
@@ -40,24 +41,23 @@ class NewsWorkerQueueManager(private val context: Context) {
 
 
     fun enqueuePeriodicDownloadTask(
-        url: String
+        url: String, downloadImagesInBackground: Boolean
     ) {
         val workManager = WorkManager.getInstance(context)
 
         val repeatInterval: Long = 30
         val periodicRequest = PeriodicWorkRequestBuilder<NewsWorker>(
             repeatInterval, TimeUnit.MINUTES
-        )
-            .setInitialDelay(repeatInterval, TimeUnit.MINUTES)
+        ).setInitialDelay(repeatInterval, TimeUnit.MINUTES)
             .setConstraints(
                 Constraints(
                     requiresBatteryNotLow = true
                 )
-            )
-            .setInputData(
+            ).setInputData(
                 inputData = workDataOf(
                     NewsWorker.URL to url,
                     NewsWorker.SOFT_MODE to true,
+                    NewsWorker.DOWNLOAD_IMAGES to downloadImagesInBackground
                 )
             )
 

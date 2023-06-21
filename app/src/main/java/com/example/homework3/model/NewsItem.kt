@@ -20,4 +20,8 @@ class NewsItem(
     override fun toString(): String {
         return "NewsItem(id='$id', title='$title', description='$description', imageUrl='$imageUrl', author='$author', publicationDate=$publicationDate, fullArticleLink='$fullArticleLink', keywords=$keywords)"
     }
+
+    fun getImagePath(): String {
+        return imageUrl.hashCode().toString()
+    }
 }

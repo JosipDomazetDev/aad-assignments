@@ -23,35 +23,36 @@ class NewsWorker(
     companion object {
         const val URL = "url"
         const val SOFT_MODE = "soft_mode"
+        const val DOWNLOAD_IMAGES = "download_images"
     }
 
     override suspend fun doWork(): Result {
         return try {
             val newsFeedUrl = inputData.getString(URL)!!
             val isSoftMode = inputData.getBoolean(SOFT_MODE, false)
+            val downloadImagesInBackground = inputData.getBoolean(DOWNLOAD_IMAGES, false)
+
             Log.i(LogKeys.BASIC_KEY, "Fetching from $newsFeedUrl")
 
             val applicationContext = applicationContext
             val newsDatabase = NewsDatabase.getInstance(applicationContext)
             val newsAPIRepository = NewsAPIRepository()
-            val newsDataRepository = NewsDataRepository(newsDatabase)
-
+            val imageManager = ImageManager(context = applicationContext)
+            val newsDataRepository = NewsDataRepository(newsDatabase, imageManager)
 
             val fetchCards = newsAPIRepository.fetchNews(newsFeedUrl)
 
             if (fetchCards.status == DataStatus.SUCCESS) {
-               if (!isSoftMode) {
-                   Log.i(LogKeys.BASIC_KEY, "Clearing all news items")
-                   newsDataRepository.deleteAllNewsItems()
+                if (isSoftMode) {
+                    deleteNewsItemOlderThanFiveDays(newsDataRepository)
+                } else {
+                    Log.i(LogKeys.BASIC_KEY, "Clearing all news items")
+                    newsDataRepository.deleteAllNewsItems()
                 }
 
                 val newsItemFromAPI = fetchCards.data!!
                 val oldNewsItems = newsDataRepository.getAllNewsItemsRaw()
-                newsDataRepository.insertNewsItems(newsItemFromAPI)
-
-                if (isSoftMode){
-                    deleteNewsItemOlderThanFiveDays(newsDataRepository)
-                }
+                newsDataRepository.insertNewsItems(newsItemFromAPI, downloadImagesInBackground)
 
                 createNotifications(newsItemFromAPI, oldNewsItems, applicationContext)
 
@@ -66,6 +67,7 @@ class NewsWorker(
             Result.failure()
         }
     }
+
 
     private suspend fun deleteNewsItemOlderThanFiveDays(newsDataRepository: NewsDataRepository) {
         Log.i(LogKeys.BASIC_KEY, "Clearing news items older than 5 days")

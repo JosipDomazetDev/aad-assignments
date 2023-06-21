@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -18,6 +19,7 @@ import coil.compose.AsyncImage
 import com.example.homework3.R
 import com.example.homework3.model.*
 import com.example.homework3.newsDetailViewModel
+import com.example.homework3.worker.ImageManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,7 +32,7 @@ fun NewsItemEntry(
             .fillMaxWidth()
             .clickable {
                 newsDetailViewModel.setCurrentNewsItem(newsItem)
-                onNavigateClick(newsItem);
+                onNavigateClick(newsItem)
             }, elevation = CardDefaults.cardElevation(
             defaultElevation = 10.dp
         ), shape = RoundedCornerShape(8.dp)
@@ -51,6 +53,7 @@ private fun SimpleEntry(
     settings: SettingsData,
     newsItem: NewsItem
 ) {
+    val context = LocalContext.current
     Row(
         modifier = Modifier
             .padding(16.dp)
@@ -61,12 +64,18 @@ private fun SimpleEntry(
                 .size(120.dp)
                 .clip(RoundedCornerShape(8.dp))
         ) {
-            if (settings.showImages) AsyncImage(
-                model = newsItem.imageUrl,
-                contentDescription = stringResource(R.string.contentDesc),
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
+            if (settings.showImages) {
+                AsyncImage(
+                    model = ImageManager.getModel(
+                        newsItem,
+                        settings.downloadImagesInBackground,
+                        context
+                    ),
+                    contentDescription = stringResource(R.string.contentDesc),
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
         }
 
         Spacer(modifier = Modifier.width(16.dp))
@@ -96,9 +105,15 @@ private fun HighlightedEntry(
     settings: SettingsData,
     newsItem: NewsItem
 ) {
+    val context = LocalContext.current
+
     Box(modifier = Modifier.fillMaxWidth()) {
         if (settings.showImages) AsyncImage(
-            model = newsItem.imageUrl,
+            model = ImageManager.getModel(
+                newsItem,
+                settings.downloadImagesInBackground,
+                context
+            ),
             contentDescription = stringResource(R.string.contentDesc),
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()

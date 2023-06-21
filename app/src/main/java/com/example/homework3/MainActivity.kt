@@ -52,6 +52,7 @@ import com.example.homework3.ui.notification.NotificationManager
 import com.example.homework3.ui.theme.Homework3Theme
 import com.example.homework3.viewmodel.NewsDetailViewModel
 import com.example.homework3.viewmodel.NewsViewModel
+import com.example.homework3.worker.ImageManager
 import com.example.homework3.worker.NewsWorkerQueueManager
 
 class MainActivity : ComponentActivity() {
@@ -102,7 +103,8 @@ fun Navigation() {
     ).get()
 
     val newsDatabase = NewsDatabase.getInstance(context)
-    val newsDataRepository = NewsDataRepository(newsDatabase)
+    val imageManager = ImageManager(context)
+    val newsDataRepository = NewsDataRepository(newsDatabase, imageManager)
 
     newsViewModel = ViewModelProvider(
         viewModelStoreOwner,
@@ -254,7 +256,10 @@ fun Navigation() {
                     },
                 )
                 SettingsScreen(settingsViewModel = settingsViewModel) {
-                    newsViewModel.reload(isSoftMode = false, urlHasChanged = true)
+                    newsViewModel.reload(
+                        isSoftMode = false,
+                        urlHasChanged = true
+                    )
                 }
             }
 
