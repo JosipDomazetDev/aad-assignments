@@ -12,6 +12,9 @@ import com.example.homework3.repository.NewsAPIRepository
 import com.example.homework3.repository.NewsDataRepository
 import com.example.homework3.repository.persistence.NewsDatabase
 import com.example.homework3.ui.notification.NotificationManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.Date
 
@@ -55,7 +58,10 @@ class NewsWorker(
                 val oldNewsItems = newsDataRepository.getAllNewsItemsRaw()
                 newsDataRepository.insertNewsItems(newsItemFromAPI, downloadImagesInBackground)
 
-                createNotifications(newsItemFromAPI, oldNewsItems, applicationContext, downloadImagesInBackground)
+
+                CoroutineScope(Dispatchers.Default).launch {
+                    createNotifications(newsItemFromAPI, oldNewsItems, applicationContext, downloadImagesInBackground)
+                }
 
                 Log.i(
                     LogKeys.BASIC_KEY,
